@@ -77,7 +77,7 @@ erDiagram
 
   team ||--o{ employee_events : "team_id"
   employee ||--o{ employee_events : "employee_id"
-  notes }o--o{ employee_events : ""
+  notes }o--o{ employee_events : "has"
 
 # Employee Events Analytics Dashboard
 
