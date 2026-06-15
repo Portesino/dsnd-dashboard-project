@@ -19,19 +19,35 @@ jobs:
         python-version: [3.10.10]
 
     steps:
-    - uses: actions/checkout@v2
+    # KORREKTUR: Upgrade auf v4 für stabileren Checkout
+    - uses: actions/checkout@v4
+    
+    # KORREKTUR: Upgrade auf v5 für besseres Caching
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v5
       with:
         python-version: ${{ matrix.python-version }}
+        
+    # KORREKTUR: Hier installieren wir jetzt dein Package und die nötigen Dashboard-Libraries
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
         python -m pip install pytest
+        
+        # 1. Das geforderte .tar.gz File im dist/ Ordner bauen
         cd ./python-package
         python setup.py sdist
         cd ..
+        
+        # 2. WICHTIG: Dein Package im Environment installieren, damit die Importe klappen
+        pip install -e ./python-package
+        
+        # 3. Die Zusatz-Bibliotheken fürs Dashboard/ML installieren
+        pip install python-fasthtml matplotlib scikit-learn pandas anyio
+        
+        # Falls du eine globale requirements.txt auf Root-Ebene hast, wird sie hier mitgenommen
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+        
     - name: Test with pytest
       run: |
         pytest

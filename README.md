@@ -78,4 +78,23 @@ erDiagram
   team ||--o{ employee_events : "team_id"
   employee ||--o{ employee_events : "employee_id"
   notes }o--o{ employee_events : ""
+
+# Employee Events Analytics Dashboard
+
+This repository contains a professional data analytics dashboard built with **FastHTML** and powered by a custom **Machine Learning Predictor**. The project is split into a modular, installable Python package for database access and a dashboard frontend.
+
+## Project Structure
+* `python-package/` - Source code and distribution files for the `employee_events` SQL API package.
+* `python-package/dist/` - Contains the required `.tar.gz` production build.
+* `report/` - FastHTML dashboard source code, filters, and custom SVG/HTML visualizations.
+* `.github/workflows/` - Automated GitHub Actions CI pipeline for running test suites.
+
+## Setup and Installation
+
+To reproduce the environment and run the dashboard locally, follow these steps:
+
+### 1. Clone the Repository
+```bash
+git clone <your-github-repo-url>
+cd dsnd-dashboard-project
 ```
