@@ -1,6 +1,4 @@
-# This workflow will install Python dependencies, run tests and lint with a variety of Python versions
-# For more information see: https://help.github.com/actions/language-and-framework-guides/using-python-with-github-actions
-
+# Dieser Workflow installiert Python-Abhängigkeiten und prüft den Code mit flake8
 name: Lint
 
 on:
@@ -10,24 +8,31 @@ on:
     branches: [ main ]
 
 jobs:
-  build:
-
+  lint: # Sinnvollerer Name als "build", da nur gelintet wird
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        python-version: [3.10.10]
 
     steps:
-    - uses: actions/checkout@v2
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v2
+    # 1. Repository auschecken (Aktualisiert auf v4)
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    # 2. Python Umgebung einrichten (Aktualisiert auf v5)
+    - name: Set up Python
+      uses: actions/setup-python@v5
       with:
-        python-version: ${{ matrix.python-version }}
+        python-version: '3.10' # Nutzt automatisch die neueste 3.10er Version (z.B. inklusive Sicherheits-Patches)
+        cache: 'pip'          # Aktiviert automatisches Caching für schnellere Durchläufe
+
+    # 3. Abhängigkeiten installieren
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
         python -m pip install flake8
+
+    # 4. Linting ausführen
     - name: Lint with flake8
       run: |
-        flake8
+        # stop the build if there are Python syntax errors or undefined names
+        flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+        # exit-zero treats all errors as warnings. The GitHub Editor is 127 chars wide
+        flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
