@@ -2,7 +2,7 @@
 This repository contains the completed final project for the Software Engineering for Data Scientists Nanodegree program. It features an interactive, production-ready analytics dashboard built using FastHTML and powered by live Machine Learning model inference. The architecture is decoupled into a modular, installable Python database API package and a web frontend.
 
 📁 Repository Structure
-Plaintext
+```
 ├── README.md                 # Project documentation
 ├── requirements.txt          # Global project dependencies (including local package)
 ├── assets/                   # Static assets for styling and core models
@@ -28,6 +28,7 @@ Plaintext
 │   └── combined_components/  # UI Molecules (form groups)
 └── tests/                    # Unit testing suite
     └── test_employee_events.py
+```
 
 # 📊  Database Schema (employee_events.db)
 The custom Python package queries a structured SQLite database containing factory operational logs. The relationship mapping is defined as follows:
