@@ -1,56 +1,48 @@
+Markdown
+# Software Engineering for Data Scientists - Final Project
 
-# Software Engineering for Data Scientists 
+This repository contains the completed final project for the **Software Engineering for Data Scientists** Nanodegree program. It features an interactive, production-ready analytics dashboard built using **FastHTML** and powered by live Machine Learning model inference. The architecture is decoupled into a modular, installable Python database API package and a web frontend.
 
-This repository contains starter code for the **Software Engineering for Data Scientists** final project. Please reference your course materials for documentation on this repository's structure and important files. Happy coding!
+---
 
-### Repository Structure
-```
-├── README.md
-├── assets
-│   ├── model.pkl
-│   └── report.css
-├── env
-├── python-package
-│   ├── employee_events
-│   │   ├── __init__.py
-│   │   ├── employee.py
-│   │   ├── employee_events.db
-│   │   ├── query_base.py
-│   │   ├── sql_execution.py
-│   │   └── team.py
-│   ├── requirements.txt
-│   ├── setup.py
-├── report
-│   ├── base_components
-│   │   ├── __init__.py
-│   │   ├── base_component.py
-│   │   ├── data_table.py
-│   │   ├── dropdown.py
-│   │   ├── matplotlib_viz.py
-│   │   └── radio.py
-│   ├── combined_components
-│   │   ├── __init__.py
-│   │   ├── combined_component.py
-│   │   └── form_group.py
-│   ├── dashboard.py
-│   └── utils.py
-├── requirements.txt
-├── start
-├── tests
-    └── test_employee_events.py
-```
+## 📁 Repository Structure
 
-### employee_events.db
+```text
+├── README.md                 # Project documentation
+├── requirements.txt          # Global project dependencies (including local package)
+├── assets/                   # Static assets for styling and core models
+│   ├── model.pkl             # Trained Scikit-Learn pipeline
+│   └── report.css            # Dashboard styling rules
+├── .github/workflows/        # Automated CI/CD pipelines
+│   └── tests.yml             # Automated Pytest suite configuration
+├── python-package/           # Distribution & Build directory
+│   ├── setup.py              # Setuptools build configuration
+│   ├── dist/                 # Required production .tar.gz builds
+│   └── employee_events/      # Core Python Package source directory
+│       ├── __init__.py       # Package initialization & exports
+│       ├── query_base.py     # Abstract base queries
+│       ├── sql_execution.py  # SQL execution engine
+│       ├── employee.py       # Employee data query models
+│       ├── team.py           # Team data query models
+│       ├── employee_events.db# Production SQLite Database
+│       └── requirements.txt  # Core package dependencies
+├── report/                   # Dashboard Frontend Web Application
+│   ├── dashboard.py          # Main FastHTML Application
+│   ├── utils.py              # ML Inference and utility tools
+│   ├── base_components/      # UI Atoms (dropdowns, tables, etc.)
+│   └── combined_components/  # UI Molecules (form groups)
+└── tests/                    # Unit testing suite
+    └── test_employee_events.py
+📊 Database Schema (employee_events.db)
+The custom Python package queries a structured SQLite database containing factory operational logs. The relationship mapping is defined as follows:
 
-```mermaid
+Code-Snippet
 erDiagram
-
   employee {
     INTEGER employee_id PK
     TEXT first_name
     TEXT last_name
     INTEGER team_id
-    
   }
 
   employee_events {
@@ -78,24 +70,54 @@ erDiagram
   team ||--o{ employee_events : "team_id"
   employee ||--o{ employee_events : "employee_id"
   notes }o--o{ employee_events : "has"
-```
+🚀 Setup and Installation
+Follow these steps to reproduce the full development environment and run the application locally.
 
-# Employee Events Analytics Dashboard
-
-This repository contains a professional data analytics dashboard built with **FastHTML** and powered by a custom **Machine Learning Predictor**. The project is split into a modular, installable Python package for database access and a dashboard frontend.
-
-## Project Structure
-* `python-package/` - Source code and distribution files for the `employee_events` SQL API package.
-* `python-package/dist/` - Contains the required `.tar.gz` production build.
-* `report/` - FastHTML dashboard source code, filters, and custom SVG/HTML visualizations.
-* `.github/workflows/` - Automated GitHub Actions CI pipeline for running test suites.
-
-## Setup and Installation
-
-To reproduce the environment and run the dashboard locally, follow these steps:
-
-### 1. Clone the Repository
-```bash
+1. Clone the Repository
+Bash
 git clone <your-github-repo-url>
 cd dsnd-dashboard-project
-```
+2. Configure the Virtual Environment
+Create and activate a clean Python 3.10+ virtual environment:
+
+Bash
+python -m venv env
+source env/bin/activate  # On Windows use: env\Scripts\activate
+3. Build & Install the Custom Python Package
+The database query infrastructure must be built and installed as a package dependency. This automatically generates the required source distribution archive inside python-package/dist/ required by the project rubric:
+
+Bash
+# Navigate to the package setup and build the distribution
+cd python-package
+python setup.py sdist
+
+# Return to root
+cd ..
+4. Install Project Dependencies
+Install all required libraries along with the local package via the main configuration file:
+
+Bash
+pip install -r requirements.txt
+🧪 Verification & Testing
+Automated Local Tests
+To verify the database structure and validate that all tables exist and read operations function correctly, execute pytest from the root directory:
+
+Bash
+pytest -s
+Continuous Integration (CI)
+A automated continuous integration workflow is established via GitHub Actions. Any commit pushed to the main branch automatically triggers the test suite on an isolated Linux runner to guarantee code stability.
+
+💻 Running the Dashboard
+Start the live FastHTML application server locally:
+
+Bash
+python report/dashboard.py
+Once initialized, open your preferred web browser and navigate to the application endpoint:
+👉 http://localhost:5000
+
+Core Features
+Decoupled Architecture: Clean separation between the database access layer (employee_events) and the presentation layer (FastHTML).
+
+Interactive Filtering: Slices live relational data by teams, managers, and operational shifts.
+
+ML Inference Pipeline: Implements a Scikit-Learn predictor to assess recruitment and retention risk metrics dynamically.
