@@ -1,13 +1,8 @@
-Markdown
 # Software Engineering for Data Scientists - Final Project
+This repository contains the completed final project for the Software Engineering for Data Scientists Nanodegree program. It features an interactive, production-ready analytics dashboard built using FastHTML and powered by live Machine Learning model inference. The architecture is decoupled into a modular, installable Python database API package and a web frontend.
 
-This repository contains the completed final project for the **Software Engineering for Data Scientists** Nanodegree program. It features an interactive, production-ready analytics dashboard built using **FastHTML** and powered by live Machine Learning model inference. The architecture is decoupled into a modular, installable Python database API package and a web frontend.
-
----
-
-## 📁 Repository Structure
-
-```text
+📁 Repository Structure
+Plaintext
 ├── README.md                 # Project documentation
 ├── requirements.txt          # Global project dependencies (including local package)
 ├── assets/                   # Static assets for styling and core models
@@ -33,10 +28,11 @@ This repository contains the completed final project for the **Software Engineer
 │   └── combined_components/  # UI Molecules (form groups)
 └── tests/                    # Unit testing suite
     └── test_employee_events.py
-📊 Database Schema (employee_events.db)
+
+# 📊  Database Schema (employee_events.db)
 The custom Python package queries a structured SQLite database containing factory operational logs. The relationship mapping is defined as follows:
 
-Code-Snippet
+```mermaid
 erDiagram
   employee {
     INTEGER employee_id PK
@@ -70,48 +66,60 @@ erDiagram
   team ||--o{ employee_events : "team_id"
   employee ||--o{ employee_events : "employee_id"
   notes }o--o{ employee_events : "has"
+```
+
 🚀 Setup and Installation
 Follow these steps to reproduce the full development environment and run the application locally.
 
 1. Clone the Repository
-Bash
+```Bash
 git clone <your-github-repo-url>
 cd dsnd-dashboard-project
+```
+
 2. Configure the Virtual Environment
 Create and activate a clean Python 3.10+ virtual environment:
 
-Bash
+```Bash
 python -m venv env
 source env/bin/activate  # On Windows use: env\Scripts\activate
+```
 3. Build & Install the Custom Python Package
 The database query infrastructure must be built and installed as a package dependency. This automatically generates the required source distribution archive inside python-package/dist/ required by the project rubric:
 
-Bash
-# Navigate to the package setup and build the distribution
+
+### Navigate to the package setup and build the distribution
+```
 cd python-package
 python setup.py sdist
-
-# Return to root
+```
+### Return to root
+```
 cd ..
+```
+
 4. Install Project Dependencies
 Install all required libraries along with the local package via the main configuration file:
 
-Bash
+```Bash
 pip install -r requirements.txt
+```
 🧪 Verification & Testing
 Automated Local Tests
 To verify the database structure and validate that all tables exist and read operations function correctly, execute pytest from the root directory:
 
-Bash
+```Bash
 pytest -s
+```
 Continuous Integration (CI)
 A automated continuous integration workflow is established via GitHub Actions. Any commit pushed to the main branch automatically triggers the test suite on an isolated Linux runner to guarantee code stability.
 
 💻 Running the Dashboard
 Start the live FastHTML application server locally:
 
-Bash
+```Bash
 python report/dashboard.py
+```
 Once initialized, open your preferred web browser and navigate to the application endpoint:
 👉 http://localhost:5000
 
