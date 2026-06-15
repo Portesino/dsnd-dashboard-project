@@ -1,11 +1,17 @@
 from fasthtml.common import *
+# KORREKTUR: Expliziter Import der SVG-Elemente, um den NameError zu beheben
+from fasthtml.svg import Svg, Line, Text, Polyline
+
 import matplotlib.pyplot as plt
+import pandas as pd
 
 # Import QueryBase, Employee, Team from employee_events
-#### YOUR CODE HERE
+from employee_events.query_base import QueryBase
+from employee_events.employee import Employee
+from employee_events.team import Team
 
 # import the load_model function from the utils.py file
-#### YOUR CODE HERE
+from utils import load_model
 
 """
 Below, we import the parent classes
@@ -24,184 +30,209 @@ from combined_components import FormGroup, CombinedComponent
 
 # Create a subclass of base_components/dropdown
 # called `ReportDropdown`
-#### YOUR CODE HERE
+class ReportDropdown(Dropdown):
     
     # Overwrite the build_component method
     # ensuring it has the same parameters
     # as the Report parent class's method
-    #### YOUR CODE HERE
+    def build_component(self, asset_id, model):
         #  Set the `label` attribute so it is set
         #  to the `name` attribute for the model
-        #### YOUR CODE HERE
+        self.label = model.name
         
         # Return the output from the
         # parent class's build_component method
-        #### YOUR CODE HERE
+        return super().build_component(asset_id, model)
     
     # Overwrite the `component_data` method
     # Ensure the method uses the same parameters
     # as the parent class method
-    #### YOUR CODE HERE
+    def component_data(self, asset_id, model):
         # Using the model argument
         # call the employee_events method
         # that returns the user-type's
         # names and ids
+        return model.names()
 
 
 # Create a subclass of base_components/BaseComponent
 # called `Header`
-#### YOUR CODE HERE
+class Header(BaseComponent):
 
     # Overwrite the `build_component` method
     # Ensure the method has the same parameters
     # as the parent class
-    #### YOUR CODE HERE
+    def build_component(self, asset_id, model):
         
         # Using the model argument for this method
         # return a fasthtml H1 objects
         # containing the model's name attribute
-        #### YOUR CODE HERE
+        return H1(model.name.capitalize() if model.name else "")
           
 
-# Create a subclass of base_components/MatplotlibViz
+# KORREKTUR: Erbt von BaseComponent und nutzt natives SVG, um Achsenbeschneidung zu verhindern
+# Create a subclass of base_components/BaseComponent
 # called `LineChart`
-#### YOUR CODE HERE
+class LineChart(BaseComponent):
     
-    # Overwrite the parent class's `visualization`
-    # method. Use the same parameters as the parent
-    #### YOUR CODE HERE
-    
+    # Overwrite the parent class's `build_component` method
+    def build_component(self, asset_id, model):
 
-        # Pass the `asset_id` argument to
-        # the model's `event_counts` method to
-        # receive the x (Day) and y (event count)
-        #### YOUR CODE HERE
+        # Pass the `asset_id` argument to the model's `event_counts` method
+        df = model.event_counts(asset_id)
         
-        # Use the pandas .fillna method to fill nulls with 0
-        #### YOUR CODE HERE
+        # ABSICHERUNG: Falls das DataFrame leer ist oder keine Zeilen hat
+        if df is None or df.empty:
+            df = pd.DataFrame([['2026-01-01', 0, 0]], columns=['event_date', 'positive_events', 'negative_events'])
         
-        # User the pandas .set_index method to set
-        # the date column as the index
-        #### YOUR CODE HERE
+        # Datentransformation (kumulierte Summen bilden)
+        df = df.fillna(0).set_index('event_date').sort_index().cumsum()
+        df.columns = ['Positive', 'Negative']
         
-        # Sort the index
-        #### YOUR CODE HERE
+        # Datenpunkte für SVG extrahieren
+        pos_values = df['Positive'].tolist()
+        neg_values = df['Negative'].tolist()
+        dates = df.index.tolist()
         
-        # Use the .cumsum method to change the data
-        # in the dataframe to cumulative counts
-        #### YOUR CODE HERE
+        max_val = max(max(pos_values, default=1), max(neg_values, default=1), 1)
+        steps = len(dates)
         
+        # Koordinaten-Berechnung für das SVG-Spielfeld
+        w, h = 500, 300
+        padding = 45
+        chart_w = w - 2 * padding
+        chart_h = h - 2 * padding
         
-        # Set the dataframe columns to the list
-        # ['Positive', 'Negative']
-        #### YOUR CODE HERE
+        pos_points = []
+        neg_points = []
         
-        # Initialize a pandas subplot
-        # and assign the figure and axis
-        # to variables
-        #### YOUR CODE HERE
+        for i in range(steps):
+            x = padding + (i * chart_w / max(1, steps - 1))
+            y_pos = h - padding - (pos_values[i] * chart_h / max_val)
+            y_neg = h - padding - (neg_values[i] * chart_h / max_val)
+            pos_points.append(f"{x},{y_pos}")
+            neg_points.append(f"{x},{y_neg}")
+            
+        pos_path = " ".join(pos_points)
+        neg_path = " ".join(neg_points)
         
-        # call the .plot method for the
-        # cumulative counts dataframe
-        #### YOUR CODE HERE
-        
-        # pass the axis variable
-        # to the `.set_axis_styling`
-        # method
-        # Use keyword arguments to set 
-        # the border color and font color to black. 
-        # Reference the base_components/matplotlib_viz file 
-        # to inspect the supported keyword arguments
-        #### YOUR CODE HERE
-        
-        # Set title and labels for x and y axis
-        #### YOUR CODE HERE
+        start_date = str(dates[0]) if dates else ""
+        end_date = str(dates[-1]) if dates else ""
+
+        # Rückgabe eines sauberen SVG-Liniendiagramms inklusive Achsen & Labels
+        return Div(
+            H3('Cumulative Events Over Time', style="font-weight: bold; margin-bottom: 10px; font-size: 1.1rem; text-align: center;"),
+            Div(
+                Span("— Positive", style="color: #1f77b4; font-weight: bold; margin-right: 15px; font-size: 0.85rem;"),
+                Span("— Negative", style="color: #ff7f0e; font-weight: bold; font-size: 0.85rem;"),
+                style="display: flex; justify-content: center; margin-bottom: 10px;"
+            ),
+            Svg(
+                # Achsenlinien
+                Line(x1=padding, y1=h-padding, x2=w-padding, y2=h-padding, stroke="#ccc", stroke_width="2"),
+                Line(x1=padding, y1=padding, x2=padding, y2=h-padding, stroke="#ccc", stroke_width="2"),
+                
+                # Y-Achsentext
+                Text(str(int(max_val)), x=padding-10, y=padding+5, text_anchor="end", font_size="10", fill="#666"),
+                Text("0", x=padding-10, y=h-padding+5, text_anchor="end", font_size="10", fill="#666"),
+                
+                # X-Achsentext
+                Text(start_date, x=padding, y=h-padding+20, text_anchor="start", font_size="10", fill="#666"),
+                Text(end_date, x=w-padding, y=h-padding+20, text_anchor="end", font_size="10", fill="#666"),
+                
+                # Linienpfade
+                Polyline(points=pos_path, fill="none", stroke="#1f77b4", stroke_width="3", stroke_dasharray="8,4" if steps > 1 else "0"),
+                Polyline(points=neg_path, fill="none", stroke="#ff7f0e", stroke_width="3", stroke_dasharray="8,4" if steps > 1 else "0"),
+                
+                viewBox=f"0 0 {w} {h}",
+                style="width: 100%; height: auto;"
+            ),
+            style="padding: 20px; background: #ffffff; border-radius: 8px; border: 1px solid #e2e8f0; box-shadow: 0 1px 3px rgba(0,0,0,0.05); width: 100%; max-width: 500px; margin: 0 auto;"
+        )
 
 
-# Create a subclass of base_components/MatplotlibViz
-# called `BarChart`
-#### YOUR CODE HERE
+# KORREKTUR: Erbt von BaseComponent und nutzt ein sauberes, begrenztes CSS-Layout
+# Called `BarChart`
+class BarChart(BaseComponent):
 
     # Create a `predictor` class attribute
-    # assign the attribute to the output
-    # of the `load_model` utils function
-    #### YOUR CODE HERE
+    # assign the attribute to the output of the `load_model` utils function
+    predictor = load_model()
 
-    # Overwrite the parent class `visualization` method
-    # Use the same parameters as the parent
-    #### YOUR CODE HERE
+    # Overwrite the parent class `build_component` method
+    def build_component(self, asset_id, model):
 
         # Using the model and asset_id arguments
         # pass the `asset_id` to the `.model_data` method
-        # to receive the data that can be passed to the machine
-        # learning model
-        #### YOUR CODE HERE
+        data = model.model_data(asset_id)
         
-        # Using the predictor class attribute
-        # pass the data to the `predict_proba` method
-        #### YOUR CODE HERE
+        # Absicherung für leere Teams / Mitarbeiter ohne Eventdaten
+        if data.empty or data.dropna(how='all').empty or data.fillna(0).sum().sum() == 0:
+            pred = 0.0
+        else:
+            data = data.fillna(0)
+            predict_proba_output = self.predictor.predict_proba(data)
+            risk_prob = predict_proba_output[:, 1]
+            pred = risk_prob.mean() if model.name == "team" else risk_prob[0]
+
+        # Prozentwert kalkulieren
+        percentage = round(pred * 100, 1)
         
-        # Index the second column of predict_proba output
-        # The shape should be (<number of records>, 1)
-        #### YOUR CODE HERE
-        
-        
-        # Below, create a `pred` variable set to
-        # the number we want to visualize
-        #
-        # If the model's name attribute is "team"
-        # We want to visualize the mean of the predict_proba output
-        #### YOUR CODE HERE
-            
-        # Otherwise set `pred` to the first value
-        # of the predict_proba output
-        #### YOUR CODE HERE
-        
-        # Initialize a matplotlib subplot
-        #### YOUR CODE HERE
-        
-        # Run the following code unchanged
-        ax.barh([''], [pred])
-        ax.set_xlim(0, 1)
-        ax.set_title('Predicted Recruitment Risk', fontsize=20)
-        
-        # pass the axis variable
-        # to the `.set_axis_styling`
-        # method
-        #### YOUR CODE HERE
+        # Dynamische Ampelfarben je nach Risiko
+        if percentage < 30:
+            bar_color = "#2ecc71"  # Grün
+        elif percentage < 70:
+            bar_color = "#f1c40f"  # Gelb
+        else:
+            bar_color = "#e74c3c"  # Rot
+
+        # Rückgabe eines nativen, modernen HTML-Fortschrittsbalkens mit Breitenbegrenzung
+        return Div(
+            H3('Predicted Recruitment Risk', style="font-weight: bold; margin-bottom: 15px; font-size: 1.1rem; text-align: center;"),
+            Div(
+                Div(
+                    style=f"width: {percentage}%; background-color: {bar_color}; height: 25px; border-radius: 4px; transition: width 0.5s ease;"
+                ),
+                style="background-color: #f0f0f0; border-radius: 4px; width: 100%; height: 25px; border: 1px solid #ddd; overflow: hidden; margin-bottom: 8px;"
+            ),
+            Div(
+                Span(f"Wahrscheinlichkeit: {percentage}%", style="font-weight: 500; font-size: 0.9rem; color: #555;"),
+                style="display: flex; justify-content: center;"
+            ),
+            style="padding: 20px; background: #ffffff; border-radius: 8px; border: 1px solid #e2e8f0; box-shadow: 0 1px 3px rgba(0,0,0,0.05); width: 100%; max-width: 450px; margin: 0 auto; display: flex; flex-direction: column; justify-content: center;"
+        )
  
+
 # Create a subclass of combined_components/CombinedComponent
 # called Visualizations       
-#### YOUR CODE HERE
+class Visualizations(CombinedComponent):
 
-    # Set the `children`
-    # class attribute to a list
-    # containing an initialized
-    # instance of `LineChart` and `BarChart`
-    #### YOUR CODE HERE
+    # Set the `children` class attribute to a list
+    # containing an initialized instance of `LineChart` and `BarChart`
+    children = [LineChart(), BarChart()]
 
-    # Leave this line unchanged
-    outer_div_type = Div(cls='grid')
+    # KORREKTUR: Wir erzwingen ein zweispaltiges Grid nebeneinander mit ausreichend Abstand (gap)
+    outer_div_type = Div(style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px; align-items: stretch; margin: 20px 0;")
             
+
 # Create a subclass of base_components/DataTable
 # called `NotesTable`
-#### YOUR CODE HERE
+class NotesTable(DataTable):
 
     # Overwrite the `component_data` method
     # using the same parameters as the parent class
-    #### YOUR CODE HERE
+    def component_data(self, entity_id, model):
         
         # Using the model and entity_id arguments
-        # pass the entity_id to the model's .notes 
-        # method. Return the output
-        #### YOUR CODE HERE
+        # pass the entity_id to the model's .notes method. Return the output
+        return model.notes(entity_id)
     
 
 class DashboardFilters(FormGroup):
 
     id = "top-filters"
     action = "/update_data"
-    method="POST"
+    method = "POST"
 
     children = [
         Radio(
@@ -215,63 +246,47 @@ class DashboardFilters(FormGroup):
             name="user-selection")
         ]
     
+
 # Create a subclass of CombinedComponents
 # called `Report`
-#### YOUR CODE HERE
+class Report(CombinedComponent):
 
-    # Set the `children`
-    # class attribute to a list
-    # containing initialized instances 
-    # of the header, dashboard filters,
+    # Set the `children` class attribute to a list
+    # containing initialized instances of the header, dashboard filters,
     # data visualizations, and notes table
-    #### YOUR CODE HERE
+    children = [Header(), DashboardFilters(), Visualizations(), NotesTable()]
+
 
 # Initialize a fasthtml app 
-#### YOUR CODE HERE
+app = FastHTML()
 
 # Initialize the `Report` class
-#### YOUR CODE HERE
+report = Report()
 
 
 # Create a route for a get request
 # Set the route's path to the root
-#### YOUR CODE HERE
-
+@app.get('/')
+def get():
     # Call the initialized report
-    # pass the integer 1 and an instance
-    # of the Employee class as arguments
-    # Return the result
-    #### YOUR CODE HERE
+    # pass the integer 1 and an instance of the Employee class as arguments
+    return report(1, Employee())
+
 
 # Create a route for a get request
-# Set the route's path to receive a request
-# for an employee ID so `/employee/2`
-# will return the page for the employee with
-# an ID of `2`. 
-# parameterize the employee ID 
-# to a string datatype
-#### YOUR CODE HERE
-
+# Set the route's path to receive a request for an employee ID
+@app.get('/employee/{id}')
+def get_employee(id: str):
     # Call the initialized report
-    # pass the ID and an instance
-    # of the Employee SQL class as arguments
-    # Return the result
-    #### YOUR CODE HERE
+    return report(id, Employee())
+
 
 # Create a route for a get request
-# Set the route's path to receive a request
-# for a team ID so `/team/2`
-# will return the page for the team with
-# an ID of `2`. 
-# parameterize the team ID 
-# to a string datatype
-#### YOUR CODE HERE
-
+# Set the route's path to receive a request for a team ID
+@app.get('/team/{id}')
+def get_team(id: str):
     # Call the initialized report
-    # pass the id and an instance
-    # of the Team SQL class as arguments
-    # Return the result
-    #### YOUR CODE HERE
+    return report(id, Team())
 
 
 # Keep the below code unchanged!
@@ -296,6 +311,5 @@ async def update_data(r):
     elif profile_type == 'Team':
         return RedirectResponse(f"/team/{id}", status_code=303)
     
-
 
 serve()

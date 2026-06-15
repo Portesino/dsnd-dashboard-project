@@ -1,5 +1,5 @@
 from .combined_component import CombinedComponent
-from fasthtml.common import Button, Form, Group
+from fasthtml.common import Button, Form, Div as Group
 
 class FormGroup(CombinedComponent):
 
